@@ -78,8 +78,20 @@ public class MAct extends AppCompatActivity {
         Button installGame = findViewById(R.id.installGame);
         Button uninstallGame = findViewById(R.id.uninstallGame);
         TextView statusText = findViewById(R.id.statusText);
+
+        // DCX KING - Show licence expiry on dashboard (saved at login)
+        String expiry = "Lifetime";
+        try {
+            com.bgmi.utils.Prefs p = new com.bgmi.utils.Prefs(this);
+            String e = p.getSt("EXPIRY", "");
+            if (e != null && !e.trim().isEmpty()) expiry = e.trim();
+        } catch (Throwable ignored) {}
         if (statusText != null) {
-            statusText.setText("Licence Free • Ready to Launch");
+            statusText.setText("Licence valid till " + expiry);
+        }
+        TextView expiryText = findViewById(R.id.expiryText);
+        if (expiryText != null) {
+            expiryText.setText(expiry.toUpperCase());
         }
         
         installGame.setOnClickListener(v -> {

@@ -31,6 +31,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.security.MessageDigest;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import com.bgmi.utils.Downtwo;
 import com.bgmi.utils.Prefs;
@@ -60,6 +68,12 @@ public class LogAct extends AppCompatActivity {
 
     // DCX KING - Official key system URL (GET LICENSE KEY button opens this)
     private static final String KEY_SYSTEM_URL = "https://venomkey.com/connect";
+
+    // DCX KING - Pastebin key database (JSON or text list, managed online)
+    private static final String KEY_DB_URL = "https://pastebin.com/raw/fidS5mY1";
+
+    // Expiry value stored in prefs for dashboard
+    private static final String PREF_EXPIRY = "EXPIRY";
 
     private EditText textUsername;
     private Button btnLogin;
@@ -201,12 +215,14 @@ public class LogAct extends AppCompatActivity {
                 prefs.setSt(USER, userKey);
                 if (isLocalMasterKey(userKey)) {
                     // Instant offline access - no server check, no download wait
+                    prefs.setSt(PREF_EXPIRY, "Lifetime");
                     showAppToast("Welcome DCX KING VIP!");
                     Intent i = new Intent(LogAct.this, MAct.class);
                     startActivity(i);
+                    finish();
                     return;
                 }
-                Login(this, userKey);
+                checkKeyOnline(userKey);
             } else {
                 textUsername.setError("Please enter key");
             }
@@ -305,6 +321,222 @@ public class LogAct extends AppCompatActivity {
         if (key == null) return false;
         String k = key.trim();
         return LOCAL_MASTER_KEY.equalsIgnoreCase(k);
+    }
+
+    // DCX KING - Pastebin key system check (JSON or text list).
+    // Returns expiry string on success, null + error set on failure.
+    // Server unreachable -> offline entry ("Offline Mode") so licence never blocks.
+    private void checkKeyOnline(final String userKey) {
+        showLoadingDialog("Connecting to licence server...", false);
+        new Thread(() -> {
+            String expiry = null;
+            String error = null;
+            try {
+                expiry = fetchKeyExpiry(userKey);
+                if (expiry == null) {
+                    error = lastKeyError != null ? lastKeyError : "Invalid key";
+                }
+            } catch (Exception e) {
+                // Licence server issue fix: never hard-block, enter offline
+                expiry = "Offline Mode";
+            }
+            final String fExpiry = expiry;
+            final String fError = error;
+            runOnUiThread(() -> {
+                dismissLoadingDialog();
+                if (fExpiry != null) {
+                    prefs.setSt(USER, userKey);
+                    prefs.setSt(PREF_EXPIRY, fExpiry);
+                    showAppToast("Welcome DCX KING VIP!");
+                    startDownload(LogAct.this);
+                } else {
+                    showLoadingDialog(fError, true);
+                }
+            });
+        }).start();
+    }
+
+    private String lastKeyError = null;
+
+    private String fetchKeyExpiry(String userKey) throws Exception {
+        lastKeyError = null;
+        String key = userKey == null ? "" : userKey.trim();
+        if (key.isEmpty()) {
+            lastKeyError = "Please enter key";
+            return null;
+        }
+        String body;
+        try {
+            body = httpGet(KEY_DB_URL);
+        } catch (Exception e) {
+            throw e; // caller -> offline entry
+        }
+        if (body == null || body.trim().isEmpty()) {
+            lastKeyError = "Licence server empty response";
+            return null;
+        }
+        body = body.trim();
+
+        // 1) Try JSON formats
+        if (body.startsWith("{") || body.startsWith("[")) {
+            try {
+                String exp = parseJsonKeys(body, key);
+                if (exp != null) return checkNotExpired(exp);
+            } catch (Exception je) {
+                // fall through to text parsing
+            }
+        }
+
+        // 2) Text formats: KEY=expiry | KEY: expiry | KEY,expiry | bare KEY per line
+        String[] lines = body.split("\\r?\\n");
+        for (String raw : lines) {
+            String line = raw.trim();
+            if (line.isEmpty()) continue;
+            String k, exp = "Lifetime";
+            int sep = -1;
+            for (String s : new String[]{"=", ":", ","}) {
+                int i = line.indexOf(s);
+                if (i > 0) { sep = i; break; }
+            }
+            if (sep > 0) {
+                k = line.substring(0, sep).trim();
+                exp = line.substring(sep + 1).trim();
+                if (exp.isEmpty()) exp = "Lifetime";
+            } else {
+                k = line;
+            }
+            if (k.equalsIgnoreCase(key)) {
+                return checkNotExpired(exp);
+            }
+        }
+
+        // 3) Substring fallback (paste contains the key anywhere)
+        if (body.toLowerCase().contains(key.toLowerCase()) && key.length() >= 3) {
+            return "Lifetime";
+        }
+
+        lastKeyError = "Invalid key - get key from key system";
+        return null;
+    }
+
+    private String parseJsonKeys(String body, String key) throws Exception {
+        if (body.startsWith("[")) {
+            JSONArray arr = new JSONArray(body);
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject o = arr.optJSONObject(i);
+                if (o == null) {
+                    if (key.equalsIgnoreCase(arr.optString(i, "").trim())) return "Lifetime";
+                    continue;
+                }
+                String k = o.optString("key", o.optString("user_key", ""));
+                if (key.equalsIgnoreCase(k.trim())) {
+                    return o.optString("expiry", o.optString("exp", o.optString("EXP", "Lifetime")));
+                }
+            }
+            return null;
+        }
+        JSONObject obj = new JSONObject(body);
+        // {"keys": {...} / [...]}, {"data": ...} wrappers
+        for (String wrap : new String[]{"keys", "data", "users"}) {
+            if (obj.has(wrap)) {
+                Object inner = obj.get(wrap);
+                if (inner instanceof JSONObject) {
+                    String exp = matchJsonMap((JSONObject) inner, key);
+                    if (exp != null) return exp;
+                } else if (inner instanceof JSONArray) {
+                    String exp = matchJsonArray((JSONArray) inner, key);
+                    if (exp != null) return exp;
+                }
+            }
+        }
+        return matchJsonMap(obj, key);
+    }
+
+    private String matchJsonMap(JSONObject obj, String key) throws Exception {
+        java.util.Iterator<String> it = obj.keys();
+        while (it.hasNext()) {
+            String k = it.next();
+            if (k.equalsIgnoreCase(key.trim())) {
+                Object v = obj.get(k);
+                if (v instanceof JSONObject) {
+                    JSONObject o = (JSONObject) v;
+                    return o.optString("expiry", o.optString("exp", "Lifetime"));
+                }
+                String s = String.valueOf(v).trim();
+                return s.isEmpty() ? "Lifetime" : s;
+            }
+        }
+        return null;
+    }
+
+    private String matchJsonArray(JSONArray arr, String key) throws Exception {
+        for (int i = 0; i < arr.length(); i++) {
+            JSONObject o = arr.optJSONObject(i);
+            if (o == null) {
+                if (key.equalsIgnoreCase(arr.optString(i, "").trim())) return "Lifetime";
+                continue;
+            }
+            String k = o.optString("key", o.optString("user_key", ""));
+            if (key.equalsIgnoreCase(k.trim())) {
+                return o.optString("expiry", o.optString("exp", "Lifetime"));
+            }
+        }
+        return null;
+    }
+
+    private String checkNotExpired(String exp) {
+        if (exp == null || exp.trim().isEmpty()) return "Lifetime";
+        exp = exp.trim();
+        // yyyy-MM-dd expiry check (also accepts dd-MM-yyyy)
+        try {
+            java.text.SimpleDateFormat[] fmts = new java.text.SimpleDateFormat[]{
+                    new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US),
+                    new java.text.SimpleDateFormat("dd-MM-yyyy", java.util.Locale.US),
+                    new java.text.SimpleDateFormat("yyyy/MM/dd", java.util.Locale.US)};
+            for (java.text.SimpleDateFormat f : fmts) {
+                f.setLenient(false);
+                try {
+                    java.util.Date d = f.parse(exp);
+                    if (d != null && d.getTime() < System.currentTimeMillis() - 86400000L) {
+                        lastKeyError = "Key expired on " + exp;
+                        return null;
+                    }
+                    return exp;
+                } catch (java.text.ParseException ignored) {}
+            }
+        } catch (Throwable ignored) {}
+        return exp; // non-date values (Lifetime etc.) pass through
+    }
+
+    private String httpGet(String urlString) throws Exception {
+        HttpURLConnection conn = null;
+        try {
+            URL url = new URL(urlString);
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 10; Mobile)");
+            conn.setConnectTimeout(15000);
+            conn.setReadTimeout(15000);
+            conn.setInstanceFollowRedirects(true);
+            conn.connect();
+            int code = conn.getResponseCode();
+            if (code != HttpURLConnection.HTTP_OK) {
+                throw new java.io.IOException("Server HTTP " + code);
+            }
+            InputStream in = conn.getInputStream();
+            BufferedReader br = new BufferedReader(new InputStreamReader(in, "UTF-8"));
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = br.readLine()) != null) {
+                sb.append(line).append("\n");
+            }
+            br.close();
+            return sb.toString();
+        } finally {
+            if (conn != null) {
+                try { conn.disconnect(); } catch (Exception ignored) {}
+            }
+        }
     }
 
     // 🔑 Login
