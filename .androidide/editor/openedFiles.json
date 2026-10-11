@@ -1,0 +1,20 @@
+{
+  "allFiles": [
+    {
+      "file": "/storage/emulated/0/AndroidIDEProjects/SNOWMAN☃️/app/src/main/jni/main.cpp",
+      "selection": {
+        "end": {
+          "column": 18,
+          "index": 626,
+          "line": 25
+        },
+        "start": {
+          "column": 18,
+          "index": 626,
+          "line": 25
+        }
+      }
+    }
+  ],
+  "selectedFile": "/storage/emulated/0/AndroidIDEProjects/SNOWMAN☃️/app/src/main/jni/main.cpp"
+}

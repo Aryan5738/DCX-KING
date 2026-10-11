@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="CustomProgressBarStyle" parent="Widget.AppCompat.ProgressBar">
+        <item name="android:indeterminateTint">#F5C518</item>
+        <item name="android:indeterminateTintMode">src_in</item>
+    </style>
+
+    <!-- Material AlertDialog style - Fully Dark Box -->
+    <style name="AlertDialogStyle" parent="Theme.MaterialComponents.Dialog.Alert">
+        <item name="android:windowBackground">@drawable/bg_ztrax_dialog</item>
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="android:textColorSecondary">#8E8E93</item>
+        <item name="android:windowMinWidthMinor">85%</item>
+    </style>
+
+</resources>
