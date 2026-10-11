@@ -54,6 +54,13 @@ public class LogAct extends AppCompatActivity {
     // DCX KING - Local master key (offline access, no panel needed)
     private static final String LOCAL_MASTER_KEY = "DCX_OK";
 
+    // DCX KING - Licence OFF: true = direct entry, no key screen needed.
+    // Files still download/update automatically via startDownload().
+    private static final boolean LICENSE_CHECK_ENABLED = true;
+
+    // DCX KING - Official key system URL (GET LICENSE KEY button opens this)
+    private static final String KEY_SYSTEM_URL = "https://venomkey.com/connect";
+
     private EditText textUsername;
     private Button btnLogin;
     private ImageView pasteBtn;
@@ -136,6 +143,21 @@ public class LogAct extends AppCompatActivity {
         // 🔑 Check permissions
         checkAndRequestPermissions();
 
+        // DCX KING - Licence OFF: skip key screen, auto-enter (files still update)
+        if (!LICENSE_CHECK_ENABLED) {
+            showAppToast("Welcome DCX KING VIP!");
+            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                try {
+                    startDownload(LogAct.this);
+                } catch (Throwable t) {
+                    Intent i = new Intent(LogAct.this, MAct.class);
+                    startActivity(i);
+                    finish();
+                }
+            }, 800);
+            // Fall through to init UI in background (hidden behind loading dialog)
+        }
+
         textUsername = findViewById(R.id.userkey);
         btnLogin = findViewById(R.id.login);
         pasteBtn = findViewById(R.id.paste);
@@ -157,11 +179,19 @@ public class LogAct extends AppCompatActivity {
         // Restore saved key
         textUsername.setText(prefs.getSt(USER, ""));
 
-        // Get Key link
+        // Get Key link - DCX KING official key system
         getKey.setOnClickListener(v -> {
-            Intent intent = new Intent(Intent.ACTION_VIEW);
-            intent.setData(Uri.parse(GetKey()));
-            startActivity(intent);
+            try {
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setData(Uri.parse(KEY_SYSTEM_URL));
+                startActivity(intent);
+            } catch (Throwable t) {
+                try {
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setData(Uri.parse(GetKey()));
+                    startActivity(intent);
+                } catch (Throwable ignored) {}
+            }
         });
 
         // Login button - DCX KING with DCX_OK local bypass
@@ -318,16 +348,32 @@ public class LogAct extends AppCompatActivity {
             if (success) {
                 Intent i = new Intent(m_Context.getApplicationContext(), MAct.class);
                 m_Context.startActivity(i);
+                if (m_Context instanceof android.app.Activity) {
+                    ((android.app.Activity) m_Context).finish();
+                }
             } else {
                 java.io.File loaderDirectory = new java.io.File(getFilesDir(), "loader");
                 if (loaderDirectory.exists() && loaderDirectory.list() != null && loaderDirectory.list().length > 0) {
                     Intent i = new Intent(m_Context.getApplicationContext(), MAct.class);
                     m_Context.startActivity(i);
+                    if (m_Context instanceof android.app.Activity) {
+                        ((android.app.Activity) m_Context).finish();
+                    }
+                } else if (!LICENSE_CHECK_ENABLED) {
+                    // DCX KING Licence OFF: server/download fail -> offline lobby anyway
+                    showAppToast("Offline mode - entering lobby");
+                    Intent i = new Intent(m_Context.getApplicationContext(), MAct.class);
+                    m_Context.startActivity(i);
+                    if (m_Context instanceof android.app.Activity) {
+                        ((android.app.Activity) m_Context).finish();
+                    }
                 } else {
                     showAppToast("Download failed!");
                 }
             }
         });
+        // Licence OFF: never block entry with server error popups
+        task.silentOnError = !LICENSE_CHECK_ENABLED;
 
         task.setProgressListener(progress -> runOnUiThread(() -> {
             if (loadingDialog != null && loadingDialog.isShowing()) {

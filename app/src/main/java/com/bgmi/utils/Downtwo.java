@@ -36,6 +36,8 @@ public class Downtwo extends AsyncTask<String, String, String> {
     private final Context context;
     private final Callback callback; // may be null
     private ProgressListener progressListener; // 🔹 Added
+    // DCX KING: when true, no error popups (offline mode enters lobby anyway)
+    public boolean silentOnError = false;
     private androidx.appcompat.app.AlertDialog progressDialog;
     private String serverVersion = "0.0";
     private static final String PREF_NAME = "com.bgmi.download";
@@ -126,8 +128,8 @@ public class Downtwo extends AsyncTask<String, String, String> {
             Log.e(TAG, "Callback threw exception: ", e);
         }
 
-        // Show final message only if activity is alive
-        if (!success) {
+        // Show final message only if activity is alive (skip in silent/offline mode)
+        if (!success && !silentOnError) {
             showFinalMessage("Error: " + result);
         }
     }

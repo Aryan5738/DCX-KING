@@ -79,7 +79,7 @@ public class MAct extends AppCompatActivity {
         Button uninstallGame = findViewById(R.id.uninstallGame);
         TextView statusText = findViewById(R.id.statusText);
         if (statusText != null) {
-            statusText.setText("DCX KING Premium Ready");
+            statusText.setText("Licence Free • Ready to Launch");
         }
         
         installGame.setOnClickListener(v -> {

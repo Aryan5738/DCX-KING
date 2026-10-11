@@ -18,6 +18,12 @@
             android:orientation="vertical"
             android:paddingBottom="32dp">
 
+            <!-- Gold top accent -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="4dp"
+                android:background="@drawable/bg_dcx_btn_gold" />
+
             <!-- Premium Top Header -->
             <LinearLayout
                 android:layout_width="match_parent"
@@ -26,13 +32,21 @@
                 android:orientation="vertical"
                 android:paddingBottom="16dp"
                 android:paddingHorizontal="24dp"
-                android:paddingTop="36dp">
+                android:paddingTop="24dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="58dp"
+                        android:layout_height="58dp"
+                        android:layout_marginEnd="14dp"
+                        android:contentDescription="DCX KING Logo"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/dcx_logo" />
 
                     <LinearLayout
                         android:layout_width="0dp"
@@ -80,14 +94,16 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
+                    android:layout_marginTop="12dp"
                     android:background="@drawable/bg_dcx_btn_outline"
-                    android:fontFamily="sans-serif-medium"
+                    android:fontFamily="sans-serif-black"
+                    android:letterSpacing="0.04"
                     android:paddingHorizontal="10dp"
-                    android:paddingVertical="4dp"
-                    android:text="Welcome back, KING  &#8226;  Undetected &amp; Safe"
+                    android:paddingVertical="5dp"
+                    android:text="LICENCE FREE  &#8226;  NO KEY NEEDED  &#8226;  UNDETECTED"
                     android:textColor="#00E676"
-                    android:textSize="11sp" />
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
 
             </LinearLayout>
 
@@ -171,7 +187,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:singleLine="true"
-                                android:text="DCX KING Premium Ready"
+                                android:text="Licence Free &#8226; Ready to Launch"
                                 android:textColor="#00E676"
                                 android:textSize="12sp"
                                 android:textStyle="bold" />
@@ -324,6 +340,125 @@
                     android:layout_height="wrap_content"
                     android:fontFamily="sans-serif-black"
                     android:letterSpacing="0.08"
+                    android:text="VIP STATUS"
+                    android:textColor="#FFD700"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingVertical="4dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Account"
+                            android:textColor="#9A93B2"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-black"
+                            android:text="KING VIP"
+                            android:textColor="#FFD700"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="#2A2438" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingVertical="4dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Access"
+                            android:textColor="#9A93B2"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-black"
+                            android:text="LIFETIME"
+                            android:textColor="#00E676"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:background="#2A2438" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingVertical="4dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Licence Key"
+                            android:textColor="#9A93B2"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif-black"
+                            android:text="NOT REQUIRED"
+                            android:textColor="#00E676"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <!-- Premium Info Card -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginTop="14dp"
+                android:background="@drawable/bg_dcx_card"
+                android:elevation="6dp"
+                android:orientation="vertical"
+                android:padding="18dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-black"
+                    android:letterSpacing="0.08"
                     android:text="WHY DCX KING?"
                     android:textColor="#FFD700"
                     android:textSize="12sp"
@@ -334,11 +469,22 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:lineSpacingExtra="3dp"
-                    android:text="Best premium UI &#8226; Instant launch &#8226; Safe OBB copy &#8226; VIP support. Enter DCX_OK key for instant local access."
+                    android:text="No key &#8226; No login &#8226; Direct VIP entry &#8226; Instant launch &#8226; Safe OBB copy &#8226; 64-bit BGMI support."
                     android:textColor="#9A93B2"
                     android:textSize="12sp" />
 
             </LinearLayout>
+
+            <!-- Footer -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="22dp"
+                android:gravity="center"
+                android:text="DCX KING &#8482;  v4.6  &#8226;  Premium VIP Experience"
+                android:textColor="#4A4560"
+                android:textSize="11sp" />
 
         </LinearLayout>
 
